@@ -1,4 +1,4 @@
-name: CI for Simple HTML App
+name: CI/CD for Simple HTML App
 
 on:
   push:
@@ -11,7 +11,6 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,13 +18,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Or any recent stable version, e.g., '18'
+          node-version: '20'
 
       - name: Install HTMLHint
-        run: npm install -g htmlhint # Install HTMLHint globally
+        run: npm install -g htmlhint
 
       - name: Validate HTML with HTMLHint
-        run: htmlhint index.html # Run HTMLHint on your index.html file
+        run: htmlhint index.html
 
       - name: Confirm index.html exists
         run: |
@@ -36,5 +35,23 @@ jobs:
           fi
           echo "index.html found. Basic file presence check passed!"
 
-      - name: CI workflow finished
-        run: echo "CI workflow completed successfully for ${{ github.ref_name }} branch!"
+      - name: Upload artifact for deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: . # Uploads the entire current directory
+
+  deploy:
+    needs: build-and-test # This job will only run if 'build-and-test' job succeeds
+    if: github.ref == 'refs/heads/main' # This job only runs on pushes to the main branch
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write # Grants the GITHUB_TOKEN write permission to deploy to GitHub Pages
+      id-token: write # Required for OpenID Connect (OIDC) authentication with GitHub Pages
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
