@@ -3,30 +3,36 @@ name: CI for Simple HTML App
 on:
   push:
     branches:
-      - main # This workflow runs when code is pushed to the 'main' branch
+      - main
   pull_request:
     branches:
-      - main # This workflow also runs when a Pull Request targets 'main'
+      - main
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest # The operating system where your CI steps will run
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # This action gets your repository code onto the CI server
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Or any recent stable version, e.g., '18'
+
+      - name: Install HTMLHint
+        run: npm install -g htmlhint # Install HTMLHint globally
 
       - name: Validate HTML with HTMLHint
-        uses: athul/html-lint-action@v2 # This is our "test" step!
-        with:
-          filepath: index.html # Tell the linter which file to check
+        run: htmlhint index.html # Run HTMLHint on your index.html file
 
       - name: Confirm index.html exists
         run: |
-          ls -l # List files to show what's there
-          if [ ! -f "index.html" ]; then # Check if index.html is missing
+          ls -l
+          if [ ! -f "index.html" ]; then
             echo "Error: index.html not found!"
-            exit 1 # Fail the CI if it's missing
+            exit 1
           fi
           echo "index.html found. Basic file presence check passed!"
 
